@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Rekap Pelamar — Ar-Rahmah</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --sky:#38B6FF; --sky-d:#1A9EE8; --sky-pale:#EBF7FF; --sky-deep:#0A5FA3;
+      --gold:#F0C040; --gold-d:#D4A017;
+      --ink:#0D1B2A; --ink-2:#1E3448; --mute:#6B8499; --mute-2:#9CB2C4;
+      --bg:#F0F6FB; --card:#FFFFFF; --border:#D6E8F5; --border-2:#E8F3FB;
+      --sidebar-w:240px;
+      --status-baru:#38B6FF; --status-proses:#F59E0B; --status-terima:#10B981; --status-tolak:#EF4444;
+      --shadow-card:0 2px 16px rgba(56,182,255,.1),0 1px 4px rgba(13,27,42,.06);
+      --shadow-hover:0 8px 32px rgba(56,182,255,.18),0 2px 8px rgba(13,27,42,.08);
+    }
+
+    html{height:100%}
+    body{
+      font-family:'DM Sans',sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      min-height:100vh;
+      display:flex;
+    }
+
+    /* ══════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════ */
+    .sidebar{
+      width:var(--sidebar-w);
+      min-height:100vh;
+      background:var(--ink);
+      display:flex;flex-direction:column;
+      flex-shrink:0;
+      position:fixed;top:0;left:0;bottom:0;
+      z-index:100;
+      transition:transform .3s;
+    }
+
+    .sidebar-logo{
+      padding:28px 24px 20px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+    }
+    .sidebar-logo .badge{
+      width:40px;height:40px;border-radius:10px;
+      background:var(--sky);
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:12px;
+    }
+    .sidebar-logo .badge svg{width:22px;height:22px;fill:white}
+    .sidebar-logo .org{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute-2);margin-bottom:3px}
+    .sidebar-logo .title{font-family:'Playfair Display',serif;font-size:15px;color:white;line-height:1.3}
+
+    .sidebar-nav{padding:16px 12px;flex:1}
+    .nav-section{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);padding:0 12px;margin:16px 0 6px}
+    .nav-item{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 12px;border-radius:10px;
+      font-size:13.5px;font-weight:500;color:var(--mute-2);
+      cursor:pointer;transition:background .15s,color .15s;
+      margin-bottom:2px;
+    }
+    .nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;flex-shrink:0}
+    .nav-item:hover{background:rgba(255,255,255,.06);color:white}
+    .nav-item.active{background:rgba(56,182,255,.15);color:var(--sky)}
+
+    .sidebar-footer{
+      padding:16px 24px;
+      border-top:1px solid rgba(255,255,255,.07);
+      font-size:11px;color:var(--mute);
+    }
+
+    /* ══════════════════════════════════════
+       MAIN
+    ══════════════════════════════════════ */
+    .main{
+      margin-left:var(--sidebar-w);
+      flex:1;
+      display:flex;flex-direction:column;
+      min-height:100vh;
+    }
+
+    /* ── Top bar ── */
+    .topbar{
+      background:var(--card);
+      border-bottom:1px solid var(--border);
+      padding:16px 32px;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:50;
+    }
+    .topbar-left h1{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink)}
+    .topbar-left p{font-size:12.5px;color:var(--mute);margin-top:2px}
+    .topbar-right{display:flex;align-items:center;gap:12px}
+
+    .btn-refresh{
+      display:flex;align-items:center;gap:7px;
+      padding:8px 16px;border-radius:9px;border:1.5px solid var(--border);
+      background:transparent;font-family:'DM Sans',sans-serif;
+      font-size:13px;font-weight:500;color:var(--ink-2);cursor:pointer;
+      transition:border-color .15s,background .15s;
+    }
+    .btn-refresh:hover{border-color:var(--sky);background:var(--sky-pale)}
+    .btn-refresh svg{width:14px;height:14px;stroke:currentColor;fill:none}
+    .btn-refresh.spinning svg{animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .last-update{font-size:11.5px;color:var(--mute)}
+
+    /* ── Content ── */
+    .content{padding:28px 32px;flex:1}
+
+    /* ── Stat cards ── */
+    .stats-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+      margin-bottom:28px;
+    }
+
+    .stat-card{
+      background:var(--card);border-radius:16px;
+      padding:20px 22px;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow-card);
+      position:relative;overflow:hidden;
+      animation:fadeUp .4s ease both;
+    }
+    .stat-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:3px;
+      border-radius:0 0 3px 3px;
+    }
+    .stat-card.total::before{background:var(--sky)}
+    .stat-card.baru::before{background:var(--status-baru)}
+    .stat-card.proses::before{background:var(--status-proses)}
+    .stat-card.terima::before{background:var(--status-terima)}
+
+    .stat-label{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-bottom:10px}
+    .stat-value{font-family:'Playfair Display',serif;font-size:36px;color:var(--ink);line-height:1}
+    .stat-sub{font-size:12px;color:var(--mute);margin-top:6px}
+    .stat-icon{
+      position:absolute;right:18px;top:18px;
+      width:36px;height:36px;border-radius:9px;
+      display:flex;align-items:center;justify-content:center;
+      opacity:.12;
+    }
+    .stat-icon svg{width:20px;height:20px;fill:var(--ink)}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .stat-card:nth-child(1){animation-delay:.05s}
+    .stat-card:nth-child(2){animation-delay:.1s}
+    .stat-card:nth-child(3){animation-delay:.15s}
+    .stat-card:nth-child(4){animation-delay:.2s}
+
+    /* ── Filter bar ── */
+    .filter-bar{
+      background:var(--card);border-radius:14px;
+      padding:16px 20px;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow-card);
+      display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+      margin-bottom:20px;
+    }
+    .filter-bar label{font-size:12px;font-weight:500;color:var(--mute);white-space:nowrap}
+
+    .filter-select{
+      padding:8px 32px 8px 12px;
+      font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);
+      background:var(--bg);border:1.5px solid var(--border);
+      border-radius:9px;outline:none;cursor:pointer;
+      -webkit-appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B8499' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 10px center;
+      transition:border-color .15s;
+    }
+    .filter-select:focus{border-color:var(--sky)}
+
+    .filter-search{
+      flex:1;min-width:180px;
+      padding:8px 14px;
+      font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);
+      background:var(--bg);border:1.5px solid var(--border);
+      border-radius:9px;outline:none;
+      transition:border-color .15s;
+    }
+    .filter-search:focus{border-color:var(--sky)}
+    .filter-search::placeholder{color:var(--mute-2)}
+
+    .filter-count{
+      margin-left:auto;font-size:12px;color:var(--mute);white-space:nowrap;
+      background:var(--bg);padding:6px 12px;border-radius:20px;
+      border:1px solid var(--border);
+    }
+
+    /* ── Table ── */
+    .table-wrap{
+      background:var(--card);border-radius:16px;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow-card);
+      overflow:hidden;
+    }
+
+    table{width:100%;border-collapse:collapse}
+    thead tr{background:var(--ink);border-bottom:2px solid var(--border)}
+    thead th{
+      padding:13px 16px;
+      font-size:11px;font-weight:600;letter-spacing:.1em;
+      text-transform:uppercase;color:rgba(255,255,255,.7);
+      text-align:left;white-space:nowrap;
+    }
+    thead th:first-child{border-radius:0}
+
+    tbody tr{
+      border-bottom:1px solid var(--border-2);
+      transition:background .12s;
+      animation:fadeUp .3s ease both;
+    }
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:var(--sky-pale)}
+
+    td{padding:13px 16px;font-size:13.5px;color:var(--ink-2);vertical-align:middle}
+
+    .td-nama{font-weight:600;color:var(--ink)}
+    .td-wa{font-size:12.5px;color:var(--mute)}
+    .td-unit{
+      display:inline-block;
+      padding:3px 9px;border-radius:20px;
+      font-size:11.5px;font-weight:500;
+      background:var(--sky-pale);color:var(--sky-d);
+      white-space:nowrap;
+    }
+    .td-ts{font-size:12px;color:var(--mute)}
+
+    /* status badge */
+    .status-badge{
+      display:inline-flex;align-items:center;gap:5px;
+      padding:4px 10px;border-radius:20px;
+      font-size:11.5px;font-weight:600;cursor:pointer;
+      white-space:nowrap;border:none;
+      font-family:'DM Sans',sans-serif;
+      transition:opacity .15s,transform .1s;
+    }
+    .status-badge:hover{opacity:.85;transform:scale(.97)}
+    .status-badge::before{
+      content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;
+    }
+    .status-baru   {background:rgba(56,182,255,.12);color:var(--status-baru)}
+    .status-baru::before{background:var(--status-baru)}
+    .status-proses {background:rgba(245,158,11,.12);color:#92400e}
+    .status-proses::before{background:var(--status-proses)}
+    .status-terima {background:rgba(16,185,129,.12);color:#065f46}
+    .status-terima::before{background:var(--status-terima)}
+    .status-tolak  {background:rgba(239,68,68,.1);color:#991b1b}
+    .status-tolak::before{background:var(--status-tolak)}
+
+    .btn-berkas{
+      display:inline-flex;align-items:center;gap:5px;
+      padding:5px 11px;border-radius:8px;
+      background:var(--sky-pale);color:var(--sky-d);
+      font-size:12px;font-weight:500;
+      text-decoration:none;border:1px solid rgba(56,182,255,.2);
+      transition:background .15s,box-shadow .15s;
+      white-space:nowrap;
+    }
+    .btn-berkas:hover{background:rgba(56,182,255,.2);box-shadow:0 2px 8px rgba(56,182,255,.2)}
+    .btn-berkas svg{width:12px;height:12px;stroke:currentColor;fill:none}
+
+    /* ── Status dropdown popup ── */
+    .status-popup{
+      position:fixed;z-index:200;
+      background:var(--card);border-radius:12px;
+      box-shadow:0 8px 32px rgba(13,27,42,.18);
+      border:1px solid var(--border);
+      padding:8px;
+      min-width:150px;
+      animation:popIn .15s ease;
+    }
+    @keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    .status-popup-item{
+      display:flex;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:8px;
+      font-size:13px;font-weight:500;cursor:pointer;
+      transition:background .1s;
+    }
+    .status-popup-item:hover{background:var(--bg)}
+    .status-popup-item::before{
+      content:'';width:8px;height:8px;border-radius:50%;flex-shrink:0;
+    }
+    .pop-baru::before{background:var(--status-baru)}
+    .pop-proses::before{background:var(--status-proses)}
+    .pop-terima::before{background:var(--status-terima)}
+    .pop-tolak::before{background:var(--status-tolak)}
+
+    /* ── Empty state ── */
+    .empty-state{
+      padding:64px 20px;text-align:center;
+    }
+    .empty-icon{
+      width:56px;height:56px;border-radius:16px;
+      background:var(--bg);
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;border:1px solid var(--border);
+    }
+    .empty-icon svg{width:26px;height:26px;stroke:var(--mute-2);fill:none}
+    .empty-state h3{font-size:15px;color:var(--ink-2);margin-bottom:6px}
+    .empty-state p{font-size:13px;color:var(--mute)}
+
+    /* ── Loading skeleton ── */
+    .skeleton-row td{padding:14px 16px}
+    .skel{
+      height:14px;border-radius:6px;
+      background:linear-gradient(90deg,#dce8f0 25%,#eaf3f9 50%,#dce8f0 75%);
+      background-size:600px 100%;
+      animation:shimmer 1.4s infinite linear;
+    }
+    @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+
+    /* ── Toast ── */
+    .toast{
+      position:fixed;bottom:28px;right:28px;z-index:999;
+      background:var(--ink);color:white;
+      padding:12px 20px;border-radius:12px;
+      font-size:13.5px;font-weight:500;
+      box-shadow:0 8px 28px rgba(13,27,42,.25);
+      display:flex;align-items:center;gap:10px;
+      transform:translateY(80px);opacity:0;
+      transition:transform .3s,opacity .3s;
+    }
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast svg{width:16px;height:16px;stroke:currentColor;fill:none;flex-shrink:0}
+    .toast.success svg{stroke:#10B981}
+    .toast.error svg{stroke:#EF4444}
+
+    /* ── Pagination ── */
+    .pagination{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 20px;
+      border-top:1px solid var(--border-2);
+    }
+    .pagination-info{font-size:12.5px;color:var(--mute)}
+    .pagination-btns{display:flex;gap:6px}
+    .pg-btn{
+      padding:6px 13px;border-radius:8px;border:1.5px solid var(--border);
+      background:transparent;font-family:'DM Sans',sans-serif;
+      font-size:12.5px;font-weight:500;color:var(--ink-2);cursor:pointer;
+      transition:border-color .15s,background .15s;
+    }
+    .pg-btn:hover:not(:disabled){border-color:var(--sky);background:var(--sky-pale)}
+    .pg-btn.active{background:var(--sky);color:white;border-color:var(--sky)}
+    .pg-btn:disabled{opacity:.4;cursor:not-allowed}
+
+    /* ── Unit breakdown bar ── */
+    .breakdown-wrap{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+      margin-bottom:24px;
+    }
+    .breakdown-card{
+      background:var(--card);border-radius:14px;padding:16px 18px;
+      border:1px solid var(--border);box-shadow:var(--shadow-card);
+      animation:fadeUp .4s ease both;
+    }
+    .breakdown-card:nth-child(1){animation-delay:.25s}
+    .breakdown-card:nth-child(2){animation-delay:.3s}
+    .breakdown-card:nth-child(3){animation-delay:.35s}
+    .breakdown-card:nth-child(4){animation-delay:.4s}
+    .breakdown-unit{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sky-d);margin-bottom:8px}
+    .breakdown-count{font-family:'Playfair Display',serif;font-size:28px;color:var(--ink);margin-bottom:8px}
+    .breakdown-bar{height:4px;background:var(--border);border-radius:4px;overflow:hidden}
+    .breakdown-fill{height:100%;background:linear-gradient(90deg,var(--sky),var(--sky-d));border-radius:4px;transition:width .6s ease}
+
+    /* ── Responsive ── */
+    @media(max-width:1100px){
+      .stats-grid,.breakdown-wrap{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%)}
+      .sidebar.open{transform:translateX(0)}
+      .main{margin-left:0}
+      .stats-grid,.breakdown-wrap{grid-template-columns:1fr 1fr}
+      .content{padding:16px}
+      .topbar{padding:14px 16px}
+      td:nth-child(4),th:nth-child(4){display:none}/* sembunyikan kolom profil di mobile */
+    }
+    @media(max-width:480px){
+      .stats-grid{grid-template-columns:1fr 1fr}
+      .breakdown-wrap{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="badge">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    </div>
+    <div class="org">Yayasan Ar-Rahmah</div>
+    <div class="title">Sistem Rekrutmen</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu</div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard Rekap
+    </div>
+    <div class="nav-item" onclick="window.open('form-publik.html','_blank')">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Form Publik
+    </div>
+    <div class="nav-item" onclick="openSheet()">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Buka Google Sheets
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">v2.0 · 2026</div>
+</aside>
+
+<!-- ══ MAIN ════════════════════════════════════════════ -->
+<div class="main">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Dashboard Rekap Pelamar</h1>
+      <p id="last-update-text">Memuat data…</p>
+    </div>
+    <div class="topbar-right">
+      <span class="last-update" id="last-update"></span>
+      <button class="btn-refresh" id="btn-refresh" onclick="loadData()">
+        <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Stat cards -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card total"><div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="stat-label">Total Pelamar</div><div class="stat-value" id="s-total">—</div><div class="stat-sub">semua unit & posisi</div></div>
+      <div class="stat-card baru"><div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="stat-label">Status Baru</div><div class="stat-value" id="s-baru">—</div><div class="stat-sub">belum ditinjau</div></div>
+      <div class="stat-card proses"><div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-label">Sedang Diproses</div><div class="stat-value" id="s-proses">—</div><div class="stat-sub">dalam peninjauan</div></div>
+      <div class="stat-card terima"><div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="stat-label">Diterima</div><div class="stat-value" id="s-terima">—</div><div class="stat-sub">lamaran berhasil</div></div>
+    </div>
+
+    <!-- Unit breakdown -->
+    <div class="breakdown-wrap" id="breakdown-wrap">
+      <div class="breakdown-card"><div class="breakdown-unit">PAUD</div><div class="breakdown-count" id="b-paud">—</div><div class="breakdown-bar"><div class="breakdown-fill" id="bf-paud" style="width:0%"></div></div></div>
+      <div class="breakdown-card"><div class="breakdown-unit">SDIT</div><div class="breakdown-count" id="b-sdit">—</div><div class="breakdown-bar"><div class="breakdown-fill" id="bf-sdit" style="width:0%"></div></div></div>
+      <div class="breakdown-card"><div class="breakdown-unit">SMPIT</div><div class="breakdown-count" id="b-smpit">—</div><div class="breakdown-bar"><div class="breakdown-fill" id="bf-smpit" style="width:0%"></div></div></div>
+      <div class="breakdown-card"><div class="breakdown-unit">SMAIT</div><div class="breakdown-count" id="b-smait">—</div><div class="breakdown-bar"><div class="breakdown-fill" id="bf-smait" style="width:0%"></div></div></div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <label>Unit</label>
+      <select class="filter-select" id="f-unit" onchange="applyFilter()">
+        <option value="">Semua Unit</option>
+        <option>PAUD Ar-Rahmah</option>
+        <option>SDIT Ar-Rahmah</option>
+        <option>SMPIT Ar-Rahmah</option>
+        <option>SMAIT Ar-Rahmah</option>
+      </select>
+
+      <label>Status</label>
+      <select class="filter-select" id="f-status" onchange="applyFilter()">
+        <option value="">Semua Status</option>
+        <option>Baru</option>
+        <option>Diproses</option>
+        <option>Diterima</option>
+        <option>Ditolak</option>
+      </select>
+
+      <label>Posisi</label>
+      <select class="filter-select" id="f-posisi" onchange="applyFilter()">
+        <option value="">Semua Posisi</option>
+      </select>
+
+      <input type="text" class="filter-search" id="f-search" placeholder="🔍  Cari nama pelamar…" oninput="applyFilter()"/>
+
+      <span class="filter-count" id="filter-count">— pelamar</span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Pelamar</th>
+            <th>Unit & Posisi</th>
+            <th>Profil Singkat</th>
+            <th>Tanggal</th>
+            <th>Status</th>
+            <th>Berkas</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body">
+          <!-- skeleton rows -->
+          <tr class="skeleton-row"><td><div class="skel" style="width:20px"></div></td><td><div class="skel" style="width:140px;margin-bottom:6px"></div><div class="skel" style="width:100px;height:10px"></div></td><td><div class="skel" style="width:110px;margin-bottom:6px"></div><div class="skel" style="width:130px;height:10px"></div></td><td><div class="skel" style="width:180px"></div></td><td><div class="skel" style="width:80px"></div></td><td><div class="skel" style="width:70px;height:24px;border-radius:20px"></div></td><td><div class="skel" style="width:80px;height:26px;border-radius:8px"></div></td></tr>
+          <tr class="skeleton-row"><td><div class="skel" style="width:20px"></div></td><td><div class="skel" style="width:160px;margin-bottom:6px"></div><div class="skel" style="width:110px;height:10px"></div></td><td><div class="skel" style="width:100px;margin-bottom:6px"></div><div class="skel" style="width:120px;height:10px"></div></td><td><div class="skel" style="width:200px"></div></td><td><div class="skel" style="width:80px"></div></td><td><div class="skel" style="width:70px;height:24px;border-radius:20px"></div></td><td><div class="skel" style="width:80px;height:26px;border-radius:8px"></div></td></tr>
+          <tr class="skeleton-row"><td><div class="skel" style="width:20px"></div></td><td><div class="skel" style="width:120px;margin-bottom:6px"></div><div class="skel" style="width:90px;height:10px"></div></td><td><div class="skel" style="width:115px;margin-bottom:6px"></div><div class="skel" style="width:140px;height:10px"></div></td><td><div class="skel" style="width:160px"></div></td><td><div class="skel" style="width:80px"></div></td><td><div class="skel" style="width:70px;height:24px;border-radius:20px"></div></td><td><div class="skel" style="width:80px;height:26px;border-radius:8px"></div></td></tr>
+        </tbody>
+      </table>
+      <div class="pagination" id="pagination" style="display:none">
+        <div class="pagination-info" id="pg-info"></div>
+        <div class="pagination-btns" id="pg-btns"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Status popup -->
+<div class="status-popup" id="status-popup" style="display:none"></div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEc6PwJoBGmB6xUPak2PwfXbKSMgIsjNm4M68WKP2w_mEw4Ff-XQr-e4UAmcgzy7QMKg/exec';
+const SHEET_URL       = 'https://docs.google.com/spreadsheets/d/1VP7ifVY0B2-g-fSY1JItZ3i3P1Tk4cvpN9GdWinJahg/edit';
+const ROWS_PER_PAGE   = 15;
+// ─────────────────────────────────────────────────────────────────────────────
+
+let allData      = [];   // semua baris dari Sheets
+let filtered     = [];   // setelah filter
+let currentPage  = 1;
+let activePopup  = null;
+
+// ── Load data ─────────────────────────────────────────────────────────────────
+async function loadData() {
+  const btn = document.getElementById('btn-refresh');
+  btn.classList.add('spinning');
+  document.getElementById('last-update-text').textContent = 'Memuat data…';
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=getDashboard');
+    const json = await res.json();
+
+    if (json.status === 'success' && json.data) {
+      allData = json.data;
+    } else {
+      allData = [];
+    }
+  } catch (e) {
+    showToast('Gagal memuat data. Periksa koneksi atau URL Apps Script.', 'error');
+    allData = [];
+  }
+
+  btn.classList.remove('spinning');
+  const now = new Date();
+  document.getElementById('last-update-text').textContent =
+    'Data per ' + now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('last-update').textContent =
+    'Diperbarui ' + now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+
+  populatePosisiFilter();
+  updateStats();
+  applyFilter();
+}
+
+// ── Stats & breakdown ─────────────────────────────────────────────────────────
+function updateStats() {
+  const total  = allData.length;
+  const baru   = allData.filter(r => r.status === 'Baru').length;
+  const proses = allData.filter(r => r.status === 'Diproses').length;
+  const terima = allData.filter(r => r.status === 'Diterima').length;
+
+  animCount('s-total',  total);
+  animCount('s-baru',   baru);
+  animCount('s-proses', proses);
+  animCount('s-terima', terima);
+
+  // breakdown per unit
+  const units = {
+    paud : allData.filter(r => r.unit && r.unit.toLowerCase().includes('paud')).length,
+    sdit : allData.filter(r => r.unit && r.unit.toLowerCase().includes('sdit')).length,
+    smpit: allData.filter(r => r.unit && r.unit.toLowerCase().includes('smpit')).length,
+    smait: allData.filter(r => r.unit && r.unit.toLowerCase().includes('smait')).length,
+  };
+  const maxU = Math.max(...Object.values(units), 1);
+  Object.entries(units).forEach(([key, val]) => {
+    document.getElementById('b-' + key).textContent = val;
+    setTimeout(() => {
+      document.getElementById('bf-' + key).style.width = (val / maxU * 100) + '%';
+    }, 300);
+  });
+}
+
+function animCount(id, target) {
+  const el = document.getElementById(id);
+  let cur = 0;
+  const step = Math.ceil(target / 20);
+  const iv = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = cur;
+    if (cur >= target) clearInterval(iv);
+  }, 30);
+}
+
+// ── Filter ────────────────────────────────────────────────────────────────────
+function populatePosisiFilter() {
+  const sel   = document.getElementById('f-posisi');
+  const posisi = [...new Set(allData.map(r => r.posisi).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Semua Posisi</option>';
+  posisi.forEach(p => {
+    const o = document.createElement('option');
+    o.value = o.textContent = p;
+    sel.appendChild(o);
+  });
+}
+
+function applyFilter() {
+  const fUnit   = document.getElementById('f-unit').value;
+  const fStatus = document.getElementById('f-status').value;
+  const fPosisi = document.getElementById('f-posisi').value;
+  const fSearch = document.getElementById('f-search').value.toLowerCase().trim();
+
+  filtered = allData.filter(r => {
+    if (fUnit   && r.unit   !== fUnit)   return false;
+    if (fStatus && r.status !== fStatus) return false;
+    if (fPosisi && r.posisi !== fPosisi) return false;
+    if (fSearch && !r.nama.toLowerCase().includes(fSearch)) return false;
+    return true;
+  });
+
+  document.getElementById('filter-count').textContent = filtered.length + ' pelamar';
+  currentPage = 1;
+  renderTable();
+}
+
+// ── Table render ──────────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('tbl-body');
+  const start = (currentPage - 1) * ROWS_PER_PAGE;
+  const page  = filtered.slice(start, start + ROWS_PER_PAGE);
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="7">
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3>Tidak ada data</h3>
+          <p>Belum ada pelamar yang sesuai filter yang dipilih.</p>
+        </div>
+      </td></tr>`;
+    document.getElementById('pagination').style.display = 'none';
+    return;
+  }
+
+  tbody.innerHTML = page.map((r, i) => {
+    const no      = start + i + 1;
+    const sc      = statusClass(r.status);
+    const profil  = r.profil ? r.profil.substring(0, 60) + (r.profil.length > 60 ? '…' : '') : '—';
+    const rowIdx  = allData.indexOf(r);
+    return `
+      <tr style="animation-delay:${i * 0.03}s">
+        <td style="color:var(--mute);font-size:12px">${no}</td>
+        <td>
+          <div class="td-nama">${esc(r.nama)}</div>
+          <div class="td-wa">📱 ${esc(r.whatsapp)}</div>
+        </td>
+        <td>
+          <div><span class="td-unit">${esc(r.unit)}</span></div>
+          <div style="font-size:12.5px;color:var(--mute);margin-top:4px">${esc(r.posisi)}</div>
+        </td>
+        <td style="max-width:200px;color:var(--mute);font-size:12.5px">${esc(profil)}</td>
+        <td class="td-ts">${esc(r.timestamp)}</td>
+        <td>
+          <button class="status-badge status-${sc}" onclick="openStatusPopup(event, ${rowIdx})">${esc(r.status)}</button>
+        </td>
+        <td>
+          ${r.fileUrl
+            ? `<a class="btn-berkas" href="${r.fileUrl}" target="_blank">
+                <svg viewBox="0 0 24 24" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Buka
+              </a>`
+            : '<span style="font-size:12px;color:var(--mute-2)">—</span>'}
+        </td>
+      </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function statusClass(s) {
+  if (!s) return 'baru';
+  const m = { 'Baru':'baru','Diproses':'proses','Diterima':'terima','Ditolak':'tolak' };
+  return m[s] || 'baru';
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+function renderPagination() {
+  const pg   = document.getElementById('pagination');
+  const info = document.getElementById('pg-info');
+  const btns = document.getElementById('pg-btns');
+  const total = filtered.length;
+  const pages = Math.ceil(total / ROWS_PER_PAGE);
+
+  if (pages <= 1) { pg.style.display = 'none'; return; }
+  pg.style.display = 'flex';
+
+  const start = (currentPage - 1) * ROWS_PER_PAGE + 1;
+  const end   = Math.min(currentPage * ROWS_PER_PAGE, total);
+  info.textContent = `Menampilkan ${start}–${end} dari ${total} pelamar`;
+
+  let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ Prev</button>`;
+  for (let p = 1; p <= pages; p++) {
+    if (pages > 7 && p > 2 && p < pages - 1 && Math.abs(p - currentPage) > 1) {
+      if (p === 3 || p === pages - 2) html += `<button class="pg-btn" disabled>…</button>`;
+      continue;
+    }
+    html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>Next ›</button>`;
+  btns.innerHTML = html;
+}
+
+function goPage(p) {
+  const pages = Math.ceil(filtered.length / ROWS_PER_PAGE);
+  if (p < 1 || p > pages) return;
+  currentPage = p;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Status popup ──────────────────────────────────────────────────────────────
+const STATUS_OPTIONS = ['Baru','Diproses','Diterima','Ditolak'];
+
+function openStatusPopup(e, rowIdx) {
+  e.stopPropagation();
+  closePopup();
+
+  const popup = document.getElementById('status-popup');
+  popup.innerHTML = STATUS_OPTIONS.map(s => `
+    <div class="status-popup-item pop-${statusClass(s)}" onclick="changeStatus(${rowIdx},'${s}')">
+      ${s}
+    </div>`).join('');
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  popup.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
+  popup.style.left = Math.min(rect.left, window.innerWidth - 170) + 'px';
+  popup.style.display = 'block';
+  activePopup = popup;
+}
+
+function closePopup() {
+  const p = document.getElementById('status-popup');
+  p.style.display = 'none';
+  activePopup = null;
+}
+document.addEventListener('click', closePopup);
+
+// ── Change status → kirim ke Apps Script ─────────────────────────────────────
+async function changeStatus(rowIdx, newStatus) {
+  closePopup();
+  const row = allData[rowIdx];
+  if (!row) return;
+
+  const oldStatus = row.status;
+  row.status = newStatus;   // optimistic update
+  applyFilter();
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateStatus', timestamp: row.timestamp, nama: row.nama, status: newStatus }),
+    });
+    const json = await res.json();
+    if (json.status === 'success') {
+      showToast('Status diubah ke "' + newStatus + '"', 'success');
+    } else {
+      throw new Error(json.message);
+    }
+  } catch (err) {
+    row.status = oldStatus;   // rollback
+    applyFilter();
+    showToast('Gagal mengubah status: ' + err.message, 'error');
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  const icon = t.querySelector('svg');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = 'toast ' + type;
+  icon.innerHTML = type === 'success'
+    ? '<polyline points="20 6 9 17 4 12"/>'
+    : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function openSheet() {
+  window.open(SHEET_URL, '_blank');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

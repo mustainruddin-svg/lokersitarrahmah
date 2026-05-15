@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — Sistem Rekrutmen Ar-Rahmah</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --sky:#38B6FF; --sky-d:#1A9EE8; --sky-pale:#EBF7FF;
+      --gold:#F0C040; --gold-d:#C89B00;
+      --ink:#0D1B2A; --ink-2:#1E3448; --mute:#6B8499; --mute-2:#9CB2C4;
+      --bg:#F0F6FB; --card:#FFFFFF; --border:#D6E8F5; --border-2:#E8F3FB;
+      --danger:#EF4444; --danger-pale:rgba(239,68,68,.08);
+      --success:#10B981; --success-pale:rgba(16,185,129,.08);
+      --sidebar-w:240px;
+      --shadow:0 2px 16px rgba(56,182,255,.1),0 1px 4px rgba(13,27,42,.06);
+    }
+
+    html,body{height:100%}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex}
+
+    /* ══ LOGIN SCREEN ══════════════════════════════════════════ */
+    .login-screen{
+      position:fixed;inset:0;z-index:999;
+      background:var(--ink);
+      display:flex;align-items:center;justify-content:center;
+      padding:20px;
+    }
+    .login-card{
+      background:var(--card);border-radius:24px;
+      padding:48px 44px;width:100%;max-width:400px;
+      text-align:center;
+      box-shadow:0 24px 80px rgba(0,0,0,.3);
+      animation:popIn .4s ease;
+    }
+    @keyframes popIn{from{opacity:0;transform:scale(.95) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+    .login-badge{
+      width:60px;height:60px;border-radius:18px;
+      background:var(--sky);
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 20px;
+      box-shadow:0 8px 24px rgba(56,182,255,.4);
+    }
+    .login-badge svg{width:30px;height:30px;fill:white}
+
+    .login-card h2{
+      font-family:'Playfair Display',serif;font-size:22px;
+      color:var(--ink);margin-bottom:6px;
+    }
+    .login-card p{font-size:13px;color:var(--mute);margin-bottom:28px}
+
+    .login-field{margin-bottom:16px;text-align:left}
+    .login-field label{display:block;font-size:12.5px;font-weight:500;color:var(--ink-2);margin-bottom:6px}
+    .login-field input{
+      width:100%;padding:12px 14px;
+      font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);
+      background:var(--bg);border:1.5px solid var(--border);
+      border-radius:10px;outline:none;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    .login-field input:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(56,182,255,.13)}
+
+    .btn-login{
+      width:100%;padding:13px;margin-top:6px;
+      border:none;border-radius:11px;
+      font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:600;
+      color:white;background:linear-gradient(135deg,var(--sky),var(--sky-d));
+      cursor:pointer;
+      box-shadow:0 6px 20px rgba(56,182,255,.35);
+      transition:transform .15s,box-shadow .15s;
+    }
+    .btn-login:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(56,182,255,.42)}
+    .btn-login:active{transform:translateY(0)}
+
+    .login-error{
+      margin-top:12px;font-size:13px;color:var(--danger);
+      display:none;background:var(--danger-pale);
+      padding:8px 12px;border-radius:8px;
+    }
+
+    /* ══ SIDEBAR ════════════════════════════════════════════ */
+    .sidebar{
+      width:var(--sidebar-w);min-height:100vh;
+      background:var(--ink);
+      display:flex;flex-direction:column;flex-shrink:0;
+      position:fixed;top:0;left:0;bottom:0;z-index:100;
+    }
+    .sidebar-logo{padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,.07)}
+    .sidebar-logo .badge{width:40px;height:40px;border-radius:10px;background:var(--sky);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+    .sidebar-logo .badge svg{width:22px;height:22px;fill:white}
+    .sidebar-logo .org{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute-2);margin-bottom:3px}
+    .sidebar-logo .title{font-family:'Playfair Display',serif;font-size:15px;color:white;line-height:1.3}
+
+    .sidebar-nav{padding:16px 12px;flex:1}
+    .nav-section{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);padding:0 12px;margin:16px 0 6px}
+    .nav-item{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 12px;border-radius:10px;
+      font-size:13.5px;font-weight:500;color:var(--mute-2);
+      cursor:pointer;transition:background .15s,color .15s;margin-bottom:2px;
+    }
+    .nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;flex-shrink:0}
+    .nav-item:hover{background:rgba(255,255,255,.06);color:white}
+    .nav-item.active{background:rgba(56,182,255,.15);color:var(--sky)}
+    .nav-item.danger{color:#f87171}
+    .nav-item.danger:hover{background:rgba(239,68,68,.1);color:var(--danger)}
+
+    .sidebar-footer{padding:16px 24px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:var(--mute)}
+
+    /* ══ MAIN ═══════════════════════════════════════════════ */
+    .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+
+    .topbar{
+      background:var(--card);border-bottom:1px solid var(--border);
+      padding:16px 32px;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:50;
+    }
+    .topbar h1{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink)}
+    .topbar p{font-size:12.5px;color:var(--mute);margin-top:2px}
+
+    .admin-badge{
+      display:flex;align-items:center;gap:8px;
+      background:rgba(56,182,255,.1);padding:6px 14px;border-radius:20px;
+      font-size:12.5px;font-weight:500;color:var(--sky-d);
+    }
+    .admin-badge::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--sky);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+    .content{padding:28px 32px;flex:1}
+
+    /* ══ UNIT TABS ══════════════════════════════════════════ */
+    .unit-tabs{
+      display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;
+    }
+    .unit-tab{
+      padding:9px 20px;border-radius:10px;
+      font-size:13.5px;font-weight:500;cursor:pointer;
+      border:1.5px solid var(--border);
+      background:var(--card);color:var(--mute);
+      transition:all .15s;
+    }
+    .unit-tab:hover{border-color:var(--sky);color:var(--sky-d)}
+    .unit-tab.active{background:var(--sky);color:white;border-color:var(--sky);box-shadow:0 4px 14px rgba(56,182,255,.3)}
+
+    /* ══ PANELS ════════════════════════════════════════════ */
+    .unit-panel{display:none}
+    .unit-panel.active{display:block;animation:fadeUp .3s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    .panel-grid{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+
+    /* ── Posisi list card ── */
+    .card{
+      background:var(--card);border-radius:16px;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);overflow:hidden;
+    }
+    .card-header{
+      padding:18px 22px;border-bottom:1px solid var(--border-2);
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .card-header h3{font-size:15px;font-weight:600;color:var(--ink)}
+    .card-header p{font-size:12px;color:var(--mute);margin-top:2px}
+
+    .posisi-list{padding:8px}
+    .posisi-item{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 14px;border-radius:10px;margin-bottom:4px;
+      transition:background .12s;
+      animation:fadeUp .25s ease both;
+    }
+    .posisi-item:hover{background:var(--bg)}
+    .posisi-item:last-child{margin-bottom:0}
+
+    .posisi-left{display:flex;align-items:center;gap:10px}
+    .posisi-dot{width:8px;height:8px;border-radius:50%;background:var(--sky);flex-shrink:0}
+    .posisi-dot.off{background:var(--mute-2)}
+    .posisi-name{font-size:13.5px;font-weight:500;color:var(--ink-2)}
+    .posisi-name.off{color:var(--mute-2);text-decoration:line-through}
+
+    .posisi-actions{display:flex;align-items:center;gap:6px}
+
+    /* toggle switch */
+    .toggle{position:relative;width:36px;height:20px;cursor:pointer}
+    .toggle input{opacity:0;width:0;height:0;position:absolute}
+    .toggle-track{
+      position:absolute;inset:0;border-radius:20px;
+      background:var(--border);transition:background .2s;
+    }
+    .toggle input:checked + .toggle-track{background:var(--sky)}
+    .toggle-thumb{
+      position:absolute;top:3px;left:3px;
+      width:14px;height:14px;border-radius:50%;
+      background:white;
+      box-shadow:0 1px 4px rgba(0,0,0,.2);
+      transition:left .2s;
+    }
+    .toggle input:checked ~ .toggle-thumb{left:19px}
+
+    .btn-del{
+      width:28px;height:28px;border-radius:7px;border:none;
+      background:transparent;cursor:pointer;color:var(--mute-2);
+      display:flex;align-items:center;justify-content:center;
+      transition:background .12s,color .12s;
+    }
+    .btn-del:hover{background:var(--danger-pale);color:var(--danger)}
+    .btn-del svg{width:14px;height:14px;stroke:currentColor;fill:none}
+
+    .posisi-empty{
+      padding:36px 20px;text-align:center;
+      font-size:13px;color:var(--mute);
+    }
+
+    /* ── Add posisi card ── */
+    .add-card{padding:22px}
+    .add-card h3{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px}
+    .add-card p{font-size:12.5px;color:var(--mute);margin-bottom:18px}
+
+    .input-group{display:flex;gap:8px}
+    .input-posisi{
+      flex:1;padding:11px 14px;
+      font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);
+      background:var(--bg);border:1.5px solid var(--border);
+      border-radius:10px;outline:none;
+      transition:border-color .15s,box-shadow .15s;
+    }
+    .input-posisi:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(56,182,255,.12)}
+    .input-posisi::placeholder{color:var(--mute-2)}
+
+    .btn-add{
+      padding:11px 18px;border:none;border-radius:10px;
+      font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;
+      color:white;background:var(--sky);cursor:pointer;white-space:nowrap;
+      display:flex;align-items:center;gap:7px;
+      transition:background .15s,box-shadow .15s,transform .12s;
+      box-shadow:0 4px 14px rgba(56,182,255,.3);
+    }
+    .btn-add:hover{background:var(--sky-d);transform:translateY(-1px)}
+    .btn-add:active{transform:translateY(0)}
+    .btn-add svg{width:15px;height:15px;stroke:white;fill:none}
+
+    /* ── Rekap mini card ── */
+    .rekap-card{padding:20px 22px}
+    .rekap-card h3{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:14px}
+    .rekap-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-2);font-size:13px}
+    .rekap-row:last-child{border-bottom:none}
+    .rekap-label{color:var(--mute)}
+    .rekap-val{font-weight:600;color:var(--ink-2)}
+    .rekap-val.highlight{color:var(--sky-d)}
+
+    /* ── Danger zone ── */
+    .danger-zone{
+      margin-top:20px;padding:18px 20px;
+      border:1.5px solid rgba(239,68,68,.2);border-radius:14px;
+      background:var(--danger-pale);
+    }
+    .danger-zone h4{font-size:13px;font-weight:600;color:var(--danger);margin-bottom:6px}
+    .danger-zone p{font-size:12px;color:#991b1b;margin-bottom:12px;line-height:1.5}
+    .btn-danger{
+      padding:8px 16px;border-radius:8px;border:1.5px solid var(--danger);
+      background:transparent;font-family:'DM Sans',sans-serif;
+      font-size:12.5px;font-weight:500;color:var(--danger);cursor:pointer;
+      transition:background .15s,color .15s;
+    }
+    .btn-danger:hover{background:var(--danger);color:white}
+
+    /* ── Saving indicator ── */
+    .saving-bar{
+      position:fixed;top:0;left:var(--sidebar-w);right:0;height:3px;
+      background:linear-gradient(90deg,var(--sky),var(--gold));
+      transform:scaleX(0);transform-origin:left;
+      transition:transform .4s ease;z-index:999;
+    }
+    .saving-bar.active{transform:scaleX(1)}
+
+    /* ── Toast ── */
+    .toast{
+      position:fixed;bottom:28px;right:28px;z-index:9999;
+      background:var(--ink);color:white;
+      padding:12px 20px;border-radius:12px;
+      font-size:13.5px;font-weight:500;
+      box-shadow:0 8px 28px rgba(13,27,42,.25);
+      display:flex;align-items:center;gap:10px;
+      transform:translateY(80px);opacity:0;
+      transition:transform .3s,opacity .3s;min-width:220px;
+    }
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast svg{width:16px;height:16px;stroke:currentColor;fill:none;flex-shrink:0}
+    .toast.success svg{stroke:var(--success)}
+    .toast.error svg{stroke:var(--danger)}
+
+    /* ── Confirm modal ── */
+    .modal-overlay{
+      position:fixed;inset:0;z-index:500;
+      background:rgba(13,27,42,.5);backdrop-filter:blur(3px);
+      display:flex;align-items:center;justify-content:center;padding:20px;
+    }
+    .modal{
+      background:var(--card);border-radius:18px;padding:32px 28px;
+      max-width:360px;width:100%;text-align:center;
+      box-shadow:0 24px 60px rgba(13,27,42,.25);
+      animation:popIn .2s ease;
+    }
+    .modal-icon{
+      width:52px;height:52px;border-radius:50%;
+      background:var(--danger-pale);
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;
+    }
+    .modal-icon svg{width:24px;height:24px;stroke:var(--danger);fill:none}
+    .modal h3{font-size:17px;font-weight:600;color:var(--ink);margin-bottom:8px}
+    .modal p{font-size:13px;color:var(--mute);line-height:1.6;margin-bottom:22px}
+    .modal-btns{display:flex;gap:10px;justify-content:center}
+    .btn-cancel{
+      padding:10px 22px;border-radius:10px;
+      border:1.5px solid var(--border);background:transparent;
+      font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;
+      color:var(--ink-2);cursor:pointer;
+      transition:background .15s;
+    }
+    .btn-cancel:hover{background:var(--bg)}
+    .btn-confirm-del{
+      padding:10px 22px;border-radius:10px;border:none;
+      font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;
+      color:white;background:var(--danger);cursor:pointer;
+      transition:opacity .15s;
+    }
+    .btn-confirm-del:hover{opacity:.85}
+
+    @media(max-width:900px){.panel-grid{grid-template-columns:1fr}}
+    @media(max-width:768px){
+      .sidebar{display:none}
+      .main{margin-left:0}
+      .content{padding:16px}
+      .topbar{padding:14px 16px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ SAVING BAR ══════════════════════════════════════════ -->
+<div class="saving-bar" id="saving-bar"></div>
+
+<!-- ══ LOGIN ══════════════════════════════════════════════ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-badge">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h2>Admin Panel</h2>
+    <p>Masukkan kata sandi untuk mengakses panel pengelolaan posisi rekrutmen.</p>
+    <div class="login-field">
+      <label>Kata Sandi Admin</label>
+      <input type="password" id="pwd-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">Masuk ke Panel Admin</button>
+    <div class="login-error" id="login-error">Kata sandi salah. Silakan coba lagi.</div>
+  </div>
+</div>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="badge">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    </div>
+    <div class="org">Yayasan Ar-Rahmah</div>
+    <div class="title">Sistem Rekrutmen</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu</div>
+    <div class="nav-item" onclick="window.open('dashboard-rekap.html')">
+      <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard Rekap
+    </div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Kelola Posisi
+    </div>
+    <div class="nav-item" onclick="window.open('form-publik.html','_blank')">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Form Publik
+    </div>
+    <div class="nav-section">Akun</div>
+    <div class="nav-item danger" onclick="doLogout()">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Keluar
+    </div>
+  </nav>
+  <div class="sidebar-footer">Admin Panel v2.0 · 2026</div>
+</aside>
+
+<!-- ══ MAIN ════════════════════════════════════════════ -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Kelola Posisi Rekrutmen</h1>
+      <p>Tambah, nonaktifkan, atau hapus posisi per unit sekolah</p>
+    </div>
+    <div class="admin-badge">Admin Aktif</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Unit tabs -->
+    <div class="unit-tabs" id="unit-tabs">
+      <div class="unit-tab active" onclick="switchUnit('PAUD Ar-Rahmah',this)">🎨 PAUD</div>
+      <div class="unit-tab" onclick="switchUnit('SDIT Ar-Rahmah',this)">📚 SDIT</div>
+      <div class="unit-tab" onclick="switchUnit('SMPIT Ar-Rahmah',this)">🔬 SMPIT</div>
+      <div class="unit-tab" onclick="switchUnit('SMAIT Ar-Rahmah',this)">🎓 SMAIT</div>
+    </div>
+
+    <!-- Panel per unit (dibuat dinamis via JS) -->
+    <div id="panels-container"></div>
+
+  </div>
+</div>
+
+<!-- ══ CONFIRM MODAL ══════════════════════════════════════ -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </div>
+    <h3 id="modal-title">Hapus Posisi?</h3>
+    <p id="modal-body">Posisi ini akan dihapus permanen dari sistem dan tidak akan muncul di form lamaran.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Batal</button>
+      <button class="btn-confirm-del" id="modal-confirm">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══════════════════════════════════════════════ -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" stroke-width="2" id="toast-icon"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEc6PwJoBGmB6xUPak2PwfXbKSMgIsjNm4M68WKP2w_mEw4Ff-XQr-e4UAmcgzy7QMKg/exec';
+
+// Kata sandi admin — hash SHA-256 dari "arrahmahadmin2026"
+// Untuk ganti password: jalankan hashPassword('kataSandiBaruAnda') di console
+// lalu paste hasilnya ke ADMIN_HASH di bawah
+const ADMIN_HASH = '76b8ddd5af9fcde1b59e9f0f7f8b8c4e2d3a1f0e6b5c4d3e2f1a0b9c8d7e6f5'; // placeholder
+// ─────────────────────────────────────────────────────────────────────────────
+
+const UNITS = ['PAUD Ar-Rahmah','SDIT Ar-Rahmah','SMPIT Ar-Rahmah','SMAIT Ar-Rahmah'];
+
+let posisiData    = {};   // { unit: [{posisi, aktif}] }
+let currentUnit   = UNITS[0];
+let pendingDelete = null;
+let isAuthed      = false;
+
+// ══ AUTH ═════════════════════════════════════════════════════════════════════
+async function hashPassword(pwd) {
+  const buf    = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function doLogin() {
+  const pwd  = document.getElementById('pwd-input').value;
+  const hash = await hashPassword(pwd);
+
+  // Fallback: jika ADMIN_HASH masih placeholder, terima password "arrahmahadmin2026"
+  const isPlaceholder = ADMIN_HASH === '76b8ddd5af9fcde1b59e9f0f7f8b8c4e2d3a1f0e6b5c4d3e2f1a0b9c8d7e6f5';
+  const defaultHash   = await hashPassword('arrahmahadmin2026');
+  const validHash     = isPlaceholder ? defaultHash : ADMIN_HASH;
+
+  if (hash === validHash) {
+    isAuthed = true;
+    document.getElementById('login-screen').style.display = 'none';
+    loadPosisi();
+  } else {
+    const err = document.getElementById('login-error');
+    err.style.display = 'block';
+    document.getElementById('pwd-input').value = '';
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
+
+function doLogout() {
+  isAuthed = false;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pwd-input').value = '';
+}
+
+// ══ LOAD POSISI ══════════════════════════════════════════════════════════════
+async function loadPosisi() {
+  setSaving(true);
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=getPosisiAdmin');
+    const json = await res.json();
+    if (json.status === 'success' && json.data) {
+      posisiData = json.data;
+    } else {
+      posisiData = getDefaultData();
+    }
+  } catch {
+    posisiData = getDefaultData();
+  }
+  setSaving(false);
+  renderAllPanels();
+  switchUnit(currentUnit, document.querySelector('.unit-tab.active'));
+}
+
+function getDefaultData() {
+  const d = {};
+  UNITS.forEach(u => d[u] = []);
+  return d;
+}
+
+// ══ RENDER ═══════════════════════════════════════════════════════════════════
+function renderAllPanels() {
+  const container = document.getElementById('panels-container');
+  container.innerHTML = UNITS.map(unit => `
+    <div class="unit-panel" id="panel-${slugify(unit)}">
+      <div class="panel-grid">
+
+        <!-- Posisi list -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3>Daftar Posisi — ${unit}</h3>
+              <p id="count-${slugify(unit)}">Memuat…</p>
+            </div>
+          </div>
+          <div class="posisi-list" id="list-${slugify(unit)}">
+            <div class="posisi-empty">Memuat data…</div>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div>
+          <!-- Add posisi -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="add-card">
+              <h3>Tambah Posisi Baru</h3>
+              <p>Posisi baru akan langsung aktif dan muncul di form lamaran.</p>
+              <div class="input-group">
+                <input type="text" class="input-posisi" id="new-posisi-${slugify(unit)}"
+                  placeholder="Nama posisi baru…"
+                  onkeydown="if(event.key==='Enter')addPosisi('${unit}')"/>
+                <button class="btn-add" onclick="addPosisi('${unit}')">
+                  <svg viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Tambah
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rekap mini -->
+          <div class="card">
+            <div class="rekap-card">
+              <h3>Ringkasan Unit</h3>
+              <div class="rekap-row">
+                <span class="rekap-label">Total posisi</span>
+                <span class="rekap-val highlight" id="r-total-${slugify(unit)}">—</span>
+              </div>
+              <div class="rekap-row">
+                <span class="rekap-label">Posisi aktif</span>
+                <span class="rekap-val" id="r-aktif-${slugify(unit)}">—</span>
+              </div>
+              <div class="rekap-row">
+                <span class="rekap-label">Posisi nonaktif</span>
+                <span class="rekap-val" id="r-off-${slugify(unit)}">—</span>
+              </div>
+            </div>
+            <div class="danger-zone">
+              <h4>⚠ Zona Berbahaya</h4>
+              <p>Nonaktifkan semua posisi unit ini sekaligus. Pelamar tidak bisa memilih unit ini di form sampai diaktifkan kembali.</p>
+              <button class="btn-danger" onclick="deactivateAll('${unit}')">Nonaktifkan Semua</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `).join('');
+
+  UNITS.forEach(renderUnit);
+}
+
+function renderUnit(unit) {
+  const slug  = slugify(unit);
+  const items = posisiData[unit] || [];
+  const aktif = items.filter(i => i.aktif).length;
+  const off   = items.length - aktif;
+
+  document.getElementById(`count-${slug}`).textContent =
+    `${items.length} posisi terdaftar · ${aktif} aktif`;
+  document.getElementById(`r-total-${slug}`).textContent = items.length;
+  document.getElementById(`r-aktif-${slug}`).textContent = aktif;
+  document.getElementById(`r-off-${slug}`).textContent   = off;
+
+  const list = document.getElementById(`list-${slug}`);
+  if (items.length === 0) {
+    list.innerHTML = '<div class="posisi-empty">Belum ada posisi. Tambahkan di sebelah kanan.</div>';
+    return;
+  }
+
+  list.innerHTML = items.map((item, idx) => `
+    <div class="posisi-item" id="item-${slug}-${idx}">
+      <div class="posisi-left">
+        <div class="posisi-dot ${item.aktif ? '' : 'off'}"></div>
+        <span class="posisi-name ${item.aktif ? '' : 'off'}">${esc(item.posisi)}</span>
+      </div>
+      <div class="posisi-actions">
+        <label class="toggle" title="${item.aktif ? 'Nonaktifkan' : 'Aktifkan'}">
+          <input type="checkbox" ${item.aktif ? 'checked' : ''} onchange="toggleAktif('${unit}',${idx},this.checked)"/>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+        <button class="btn-del" title="Hapus posisi" onclick="confirmDelete('${unit}',${idx})">
+          <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══ SWITCH UNIT TAB ══════════════════════════════════════════════════════════
+function switchUnit(unit, tabEl) {
+  currentUnit = unit;
+  document.querySelectorAll('.unit-tab').forEach(t => t.classList.remove('active'));
+  if (tabEl) tabEl.classList.add('active');
+  document.querySelectorAll('.unit-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + slugify(unit));
+  if (panel) panel.classList.add('active');
+}
+
+// ══ ADD POSISI ════════════════════════════════════════════════════════════════
+async function addPosisi(unit) {
+  const input = document.getElementById('new-posisi-' + slugify(unit));
+  const name  = input.value.trim();
+  if (!name) { input.focus(); return; }
+
+  // Cek duplikat
+  if ((posisiData[unit] || []).some(i => i.posisi.toLowerCase() === name.toLowerCase())) {
+    showToast('Posisi "' + name + '" sudah ada.', 'error');
+    return;
+  }
+
+  if (!posisiData[unit]) posisiData[unit] = [];
+  posisiData[unit].push({ posisi: name, aktif: true });
+  input.value = '';
+  renderUnit(unit);
+
+  await savePosisi(unit, 'add', name);
+}
+
+// ══ TOGGLE AKTIF ════════════════════════════════════════════════════════════
+async function toggleAktif(unit, idx, aktif) {
+  posisiData[unit][idx].aktif = aktif;
+  renderUnit(unit);
+  await savePosisi(unit, 'toggle', posisiData[unit][idx].posisi, aktif);
+}
+
+// ══ DELETE ══════════════════════════════════════════════════════════════════
+function confirmDelete(unit, idx) {
+  const name = posisiData[unit][idx].posisi;
+  document.getElementById('modal-title').textContent = 'Hapus "' + name + '"?';
+  document.getElementById('modal-body').textContent  =
+    'Posisi ini akan dihapus permanen dari sistem dan tidak akan muncul di form lamaran.';
+  document.getElementById('modal-confirm').onclick = () => doDelete(unit, idx);
+  document.getElementById('modal').style.display = 'flex';
+}
+
+async function doDelete(unit, idx) {
+  closeModal();
+  const name = posisiData[unit][idx].posisi;
+  posisiData[unit].splice(idx, 1);
+  renderUnit(unit);
+  await savePosisi(unit, 'delete', name);
+}
+
+// ══ DEACTIVATE ALL ══════════════════════════════════════════════════════════
+async function deactivateAll(unit) {
+  document.getElementById('modal-title').textContent = 'Nonaktifkan Semua Posisi?';
+  document.getElementById('modal-body').textContent  =
+    'Semua posisi di ' + unit + ' akan dinonaktifkan. Pelamar tidak bisa memilih unit ini sampai Anda mengaktifkan kembali.';
+  document.getElementById('modal-confirm').onclick = async () => {
+    closeModal();
+    posisiData[unit].forEach(i => i.aktif = false);
+    renderUnit(unit);
+    await savePosisi(unit, 'deactivateAll', '');
+  };
+  document.getElementById('modal').style.display = 'flex';
+}
+
+// ══ SAVE TO APPS SCRIPT ══════════════════════════════════════════════════════
+async function savePosisi(unit, action, posisi, aktif) {
+  setSaving(true);
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action      : 'managePosisi',
+        subAction   : action,
+        unit        : unit,
+        posisi      : posisi,
+        aktif       : aktif,
+        allPosisi   : posisiData[unit],   // kirim seluruh state unit ini
+      }),
+    });
+    const json = await res.json();
+    if (json.status === 'success') {
+      showToast(toastMsg(action, posisi), 'success');
+    } else {
+      throw new Error(json.message);
+    }
+  } catch (err) {
+    showToast('Gagal menyimpan: ' + err.message, 'error');
+  }
+  setSaving(false);
+}
+
+function toastMsg(action, posisi) {
+  if (action === 'add')          return '✓ Posisi "' + posisi + '" berhasil ditambahkan';
+  if (action === 'delete')       return '✓ Posisi "' + posisi + '" berhasil dihapus';
+  if (action === 'toggle')       return '✓ Status posisi diperbarui';
+  if (action === 'deactivateAll') return '✓ Semua posisi dinonaktifkan';
+  return '✓ Tersimpan';
+}
+
+// ══ UI HELPERS ════════════════════════════════════════════════════════════════
+function setSaving(on) {
+  document.getElementById('saving-bar').classList.toggle('active', on);
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+
+function showToast(msg, type = 'success') {
+  const t    = document.getElementById('toast');
+  const icon = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = 'toast ' + type;
+  icon.innerHTML = type === 'success'
+    ? '<polyline points="20 6 9 17 4 12"/>'
+    : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function slugify(s) { return s.toLowerCase().replace(/[\s']/g,'-').replace(/[^a-z0-9-]/g,''); }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
